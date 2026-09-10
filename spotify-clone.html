@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotihive</title>
+<style>
+  :root{
+    --green:#1ed760;
+    --black:#000000;
+    --panel:#121212;
+    --panel-light:#181818;
+    --card:#181818;
+    --card-hover:#282828;
+    --text:#ffffff;
+    --muted:#a7a7a7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--black);
+    color:var(--text);
+    font-family:'Segoe UI', Arial, sans-serif;
+    height:100vh;
+    overflow:hidden;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    grid-template-rows:1fr 90px;
+    height:100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar{
+    background:var(--black);
+    padding:20px 12px;
+    display:flex;flex-direction:column;gap:8px;
+    grid-row:1;
+  }
+  .brand{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 12px 20px;font-size:22px;font-weight:800;letter-spacing:-.5px;
+  }
+  .brand-dot{width:26px;height:26px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#000;font-size:14px;}
+  .nav-section{background:var(--panel);border-radius:8px;padding:6px;margin-bottom:10px;}
+  .nav-item{
+    display:flex;align-items:center;gap:14px;padding:9px 12px;border-radius:6px;
+    font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;
+  }
+  .nav-item.active, .nav-item:hover{color:var(--text);}
+  .nav-icon{width:20px;text-align:center;}
+  .library{
+    background:var(--panel);border-radius:8px;flex:1;
+    padding:8px 6px;display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .library-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 10px;font-size:14px;font-weight:700;color:var(--muted);
+  }
+  .library-header span{color:var(--text);}
+  .playlist-item{
+    display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:6px;cursor:pointer;
+  }
+  .playlist-item:hover{background:#1a1a1a;}
+  .pl-thumb{width:44px;height:44px;border-radius:4px;flex:0 0 auto;background-size:cover;}
+  .pl-info{overflow:hidden;}
+  .pl-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pl-sub{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* MAIN */
+  .main{
+    overflow-y:auto;
+    background:linear-gradient(180deg,#3a2c6e 0%, var(--panel) 340px, var(--panel) 100%);
+    grid-row:1;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 32px;
+    background:rgba(0,0,0,.15);
+    backdrop-filter:blur(6px);
+  }
+  .nav-arrows{display:flex;gap:10px;}
+  .nav-arrows span{
+    width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.6);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;
+  }
+  .user-pill{
+    display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.6);
+    padding:4px 8px 4px 4px;border-radius:20px;cursor:pointer;
+  }
+  .user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ff6a00,#ee0979);}
+
+  .content{padding:20px 32px 40px;}
+  .greeting{font-size:26px;font-weight:800;margin-bottom:18px;}
+  .quick-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:38px;
+  }
+  @media(min-width:900px){.quick-grid{grid-template-columns:repeat(3,1fr);}}
+  .quick-item{
+    background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;
+    display:flex;align-items:center;gap:14px;cursor:pointer;
+    transition:background .2s ease;
+  }
+  .quick-item:hover{background:rgba(255,255,255,.14);}
+  .quick-thumb{width:64px;height:64px;flex:0 0 auto;background-size:cover;}
+  .quick-name{font-size:14.5px;font-weight:700;padding-right:10px;}
+
+  .section{margin-bottom:38px;}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .section-title{font-size:21px;font-weight:800;}
+  .section-link{font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;}
+  .card-row{display:flex;gap:20px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;}
+  .card-row::-webkit-scrollbar{display:none;}
+  .music-card{
+    flex:0 0 168px;background:var(--card);border-radius:8px;padding:14px;cursor:pointer;
+    position:relative;transition:background .2s ease;
+  }
+  .music-card:hover{background:var(--card-hover);}
+  .music-card.round .art{border-radius:50%;}
+  .art{
+    width:100%;aspect-ratio:1;border-radius:6px;background-size:cover;background-position:center;
+    margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.4);position:relative;
+  }
+  .play-fab{
+    position:absolute;right:8px;bottom:8px;
+    width:44px;height:44px;border-radius:50%;background:var(--green);
+    display:flex;align-items:center;justify-content:center;color:#000;font-size:16px;
+    opacity:0;transform:translateY(6px);
+    transition:opacity .2s ease, transform .2s ease;
+    box-shadow:0 8px 18px rgba(0,0,0,.5);
+  }
+  .music-card:hover .play-fab{opacity:1;transform:translateY(0);}
+  .track-name{font-size:14.5px;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .track-sub{font-size:12.5px;color:var(--muted);line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+  /* PLAYER BAR */
+  .player{
+    grid-column:1 / -1;
+    background:var(--panel-light);border-top:1px solid #282828;
+    display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;
+    padding:0 16px;
+  }
+  .now-playing{display:flex;align-items:center;gap:12px;min-width:0;}
+  .np-art{width:56px;height:56px;border-radius:4px;background-size:cover;flex:0 0 auto;}
+  .np-text{min-width:0;}
+  .np-title{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .np-artist{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .np-like{margin-left:12px;font-size:15px;color:var(--muted);cursor:pointer;flex:0 0 auto;}
+  .np-like.liked{color:var(--green);}
+
+  .player-center{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .controls{display:flex;align-items:center;gap:20px;}
+  .ctrl-btn{font-size:15px;color:var(--muted);cursor:pointer;}
+  .ctrl-btn:hover{color:var(--text);}
+  .play-pause{
+    width:32px;height:32px;border-radius:50%;background:#fff;color:#000;
+    display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;
+  }
+  .progress-row{display:flex;align-items:center;gap:8px;width:100%;max-width:520px;}
+  .time{font-size:11px;color:var(--muted);width:34px;}
+  .time.end{text-align:left;}
+  .bar-track{
+    flex:1;height:4px;background:#4d4d4d;border-radius:2px;position:relative;cursor:pointer;
+  }
+  .bar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--text);border-radius:2px;width:0%;}
+  .bar-track:hover .bar-fill{background:var(--green);}
+
+  .player-right{display:flex;align-items:center;justify-content:flex-end;gap:14px;}
+  .vol-icon{font-size:14px;color:var(--muted);}
+  .vol-track{width:90px;height:4px;background:#4d4d4d;border-radius:2px;position:relative;cursor:pointer;}
+  .vol-fill{position:absolute;left:0;top:0;bottom:0;background:var(--text);border-radius:2px;width:70%;}
+  .vol-track:hover .vol-fill{background:var(--green);}
+
+  @media(max-width:760px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .player{grid-template-columns:1fr auto;}
+    .player-center{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-dot">♫</div> Spotihive</div>
+    <div class="nav-section">
+      <div class="nav-item active"><span class="nav-icon">⌂</span> Home</div>
+      <div class="nav-item"><span class="nav-icon">🔍</span> Search</div>
+    </div>
+    <div class="library" id="library">
+      <div class="library-header"><span>Your Library</span> +</div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="topbar">
+      <div class="nav-arrows"><span>‹</span><span>›</span></div>
+      <div class="user-pill">
+        <div class="user-avatar"></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="greeting" id="greeting">Good evening</div>
+      <div class="quick-grid" id="quickGrid"></div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Made for you</div>
+          <div class="section-link">Show all</div>
+        </div>
+        <div class="card-row" id="madeForYou"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Popular artists</div>
+          <div class="section-link">Show all</div>
+        </div>
+        <div class="card-row" id="artists"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Recently played</div>
+          <div class="section-link">Show all</div>
+        </div>
+        <div class="card-row" id="recent"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="player">
+    <div class="now-playing">
+      <div class="np-art" id="npArt"></div>
+      <div class="np-text">
+        <div class="np-title" id="npTitle">Nothing playing</div>
+        <div class="np-artist" id="npArtist">Pick a track</div>
+      </div>
+      <div class="np-like" id="npLike" onclick="toggleLike()">♡</div>
+    </div>
+    <div class="player-center">
+      <div class="controls">
+        <div class="ctrl-btn">🔀</div>
+        <div class="ctrl-btn" onclick="skip(-1)">⏮</div>
+        <div class="play-pause" id="playPause" onclick="togglePlay()">▶</div>
+        <div class="ctrl-btn" onclick="skip(1)">⏭</div>
+        <div class="ctrl-btn">🔁</div>
+      </div>
+      <div class="progress-row">
+        <div class="time" id="curTime">0:00</div>
+        <div class="bar-track" id="barTrack" onclick="seek(event)">
+          <div class="bar-fill" id="barFill"></div>
+        </div>
+        <div class="time end" id="totalTime">0:00</div>
+      </div>
+    </div>
+    <div class="player-right">
+      <span class="vol-icon">🔊</span>
+      <div class="vol-track" id="volTrack" onclick="setVol(event)">
+        <div class="vol-fill" id="volFill"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Free cartoon-style illustrations via DiceBear (open-source, MIT-licensed, generated on the fly as SVG —
+// always renders, no broken links). Round artist tiles get "fun-emoji" faces; square covers get "shapes".
+const artSeeds = [
+  'sp-a1','sp-a2','sp-a3','sp-a4','sp-a5','sp-a6','sp-a7','sp-a8','sp-a9','sp-a10',
+  'sp-a11','sp-a12','sp-a13','sp-a14','sp-a15','sp-a16','sp-a17','sp-a18','sp-a19','sp-a20',
+  'sp-a21','sp-a22'
+];
+const spotifyStyles = ['shapes','fun-emoji','bottts','identicon','big-smile'];
+function artUrl(seed, style='shapes'){
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&backgroundType=gradientLinear&backgroundColor=1ed760,0a5c2c,1a1a1a,2b1055,c31432`;
+}
+const artColors = artSeeds.map((s,i) => `url('${artUrl(s, spotifyStyles[i % spotifyStyles.length])}') center/cover no-repeat, #222`);
+
+const artistNames = ["Nova Rae","The Long Weekend","Kilo Sun","Ember & Iris","Dry County","Marlow","Tessellate","Night Cargo","Bloom Radio","Static Deer","The Foldback","Coastline Youth"];
+const songNames = ["Amber Skies","Low Tide","Paper Moons","Concrete Flowers","Slow Burn","Halfway Home","Neon Rain","Coastal Drift","Glass Houses","Wildfire","Quiet Hours","Afterglow","Static Bloom","Velvet Static","Midnight Ferry"];
+const playlistNames = ["Chill Mix","Deep Focus","Road Trip Anthems","Sunday Acoustic","Late Night Vibes","Workout Energy","Indie Favorites","Throwback Hits"];
+
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function fmtTime(s){ const m=Math.floor(s/60); const sec=Math.floor(s%60).toString().padStart(2,'0'); return `${m}:${sec}`; }
+
+// Build library sidebar
+const library = document.getElementById('library');
+playlistNames.forEach((name, i) => {
+  const el = document.createElement('div');
+  el.className = 'playlist-item';
+  el.innerHTML = `
+    <div class="pl-thumb" style="background:${artColors[i % artColors.length]}"></div>
+    <div class="pl-info">
+      <div class="pl-name">${name}</div>
+      <div class="pl-sub">Playlist • Spotihive</div>
+    </div>
+  `;
+  el.onclick = () => playTrack(rand(songNames), rand(artistNames), artColors[i % artColors.length]);
+  library.appendChild(el);
+});
+
+// Quick grid (6 items)
+const quickGrid = document.getElementById('quickGrid');
+for(let i=0;i<6;i++){
+  const name = rand(playlistNames);
+  const bg = artColors[i % artColors.length];
+  const el = document.createElement('div');
+  el.className = 'quick-item';
+  el.innerHTML = `<div class="quick-thumb" style="background:${bg}"></div><div class="quick-name">${name}</div>`;
+  el.onclick = () => playTrack(rand(songNames), rand(artistNames), bg);
+  quickGrid.appendChild(el);
+}
+
+function buildCardRow(containerId, count, round){
+  const container = document.getElementById(containerId);
+  for(let i=0;i<count;i++){
+    const song = rand(songNames);
+    const artist = rand(artistNames);
+    const bg = artColors[Math.floor(Math.random()*artColors.length)];
+    const el = document.createElement('div');
+    el.className = 'music-card' + (round ? ' round' : '');
+    el.innerHTML = `
+      <div class="art" style="background:${bg}">
+        <div class="play-fab" onclick="event.stopPropagation(); playTrack('${song}','${artist}','${bg}')">▶</div>
+      </div>
+      <div class="track-name">${round ? artist : song}</div>
+      <div class="track-sub">${round ? 'Artist' : 'Song • ' + artist}</div>
+    `;
+    el.onclick = () => playTrack(song, artist, bg);
+    container.appendChild(el);
+  }
+}
+buildCardRow('madeForYou', 8, false);
+buildCardRow('artists', 8, true);
+buildCardRow('recent', 8, false);
+
+// Greeting based on time
+const hour = new Date().getHours();
+document.getElementById('greeting').textContent =
+  hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+// PLAYER LOGIC
+let isPlaying = false;
+let duration = 0;
+let current = 0;
+let timer = null;
+let liked = false;
+
+function playTrack(title, artist, bg){
+  document.getElementById('npTitle').textContent = title;
+  document.getElementById('npArtist').textContent = artist;
+  document.getElementById('npArt').style.background = bg;
+  duration = 150 + Math.floor(Math.random()*90); // 2:30 - 4:00
+  current = 0;
+  liked = false;
+  document.getElementById('npLike').classList.remove('liked');
+  document.getElementById('npLike').textContent = '♡';
+  document.getElementById('totalTime').textContent = fmtTime(duration);
+  startPlaying();
+}
+
+function startPlaying(){
+  isPlaying = true;
+  document.getElementById('playPause').textContent = '⏸';
+  clearInterval(timer);
+  timer = setInterval(() => {
+    current += 1;
+    if(current >= duration){ current = duration; pausePlaying(); }
+    updateProgress();
+  }, 1000);
+}
+function pausePlaying(){
+  isPlaying = false;
+  document.getElementById('playPause').textContent = '▶';
+  clearInterval(timer);
+}
+function togglePlay(){
+  if(!document.getElementById('npTitle').textContent || document.getElementById('npTitle').textContent === 'Nothing playing'){
+    playTrack(rand(songNames), rand(artistNames), rand(artColors));
+    return;
+  }
+  isPlaying ? pausePlaying() : startPlaying();
+}
+function updateProgress(){
+  const pct = duration ? (current/duration)*100 : 0;
+  document.getElementById('barFill').style.width = pct + '%';
+  document.getElementById('curTime').textContent = fmtTime(current);
+}
+function seek(e){
+  const track = document.getElementById('barTrack');
+  const rect = track.getBoundingClientRect();
+  const pct = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+  current = Math.floor(pct * duration);
+  updateProgress();
+}
+function setVol(e){
+  const track = document.getElementById('volTrack');
+  const rect = track.getBoundingClientRect();
+  const pct = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+  document.getElementById('volFill').style.width = (pct*100) + '%';
+}
+function skip(dir){
+  playTrack(rand(songNames), rand(artistNames), rand(artColors));
+}
+function toggleLike(){
+  liked = !liked;
+  const el = document.getElementById('npLike');
+  el.classList.toggle('liked', liked);
+  el.textContent = liked ? '♥' : '♡';
+}
+</script>
+
+</body>
+</html>
